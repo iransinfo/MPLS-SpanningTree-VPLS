@@ -1,0 +1,38 @@
+hostname PE2
+!
+segment-routing mpls
+ !
+ connected-prefix-sid-map
+  address-family ipv4
+   2.2.2.2/32 index 4 range 1 
+  exit-address-family
+!
+cdp run
+!
+interface Loopback0
+ description MGMT
+ ip address 2.2.2.2 255.255.255.255
+!
+interface GigabitEthernet1
+ description PE1
+ mtu 2000
+ ip address 172.17.1.2 255.255.255.252
+ ip router isis 1
+ isis network point-to-point 
+!
+interface GigabitEthernet2
+ description CE2-R2
+ mtu 2000
+ service instance 10 ethernet
+  encapsulation dot1q 10
+  rewrite ingress tag pop 1 symmetric
+  xconnect 1.1.1.1 10 encapsulation mpls
+!
+router isis 1
+ net 49.0000.0000.0000.0002.00
+ is-type level-1
+ advertise passive-only
+ metric-style wide
+ log-adjacency-changes all
+ segment-routing mpls
+ passive-interface Loopback0

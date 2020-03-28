@@ -1,0 +1,79 @@
+hostname PE1
+!
+l2vpn vfi context CE1 
+ vpn id 1000
+ mtu 2000
+ member pseudowire10
+!
+segment-routing mpls
+ !
+ connected-prefix-sid-map
+  address-family ipv4
+   1.1.1.1/32 index 4 range 1 
+  exit-address-family
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+spanning-tree vlan 1-4094 priority 61440
+!
+bridge-domain 10 
+ member GigabitEthernet1 service-instance 10
+ member GigabitEthernet2 service-instance 10
+ member GigabitEthernet3 service-instance 10
+ member vfi CE1
+!
+cdp run
+!
+interface Loopback0
+ description MGMT
+ ip address 1.1.1.1 255.255.255.255
+!
+interface pseudowire10
+ description CE1-TRANSMISSION
+ encapsulation mpls
+ signaling protocol ldp
+ neighbor 2.2.2.2 10
+ mtu 2000
+!
+interface GigabitEthernet1
+ description CE-SW2
+ mtu 2000
+ no ip address
+ service instance 10 ethernet
+  encapsulation dot1q 10
+  rewrite ingress tag pop 1 symmetric
+  l2protocol peer stp
+!
+interface GigabitEthernet2
+ description CE-SW3
+ mtu 2000
+ no ip address
+ service instance 10 ethernet
+  encapsulation dot1q 10
+  rewrite ingress tag pop 1 symmetric
+  l2protocol peer stp
+!
+interface GigabitEthernet3
+ description CE-SW4
+ mtu 2000
+ no ip address
+ service instance 10 ethernet
+  encapsulation dot1q 10
+  rewrite ingress tag pop 1 symmetric
+  l2protocol peer stp
+!
+interface GigabitEthernet4
+ description PE2
+ mtu 2000
+ ip address 172.17.1.1 255.255.255.252
+ ip router isis 1
+ isis network point-to-point
+!
+router isis 1
+ net 49.0000.0000.0000.0001.00
+ is-type level-1
+ advertise passive-only
+ metric-style wide
+ log-adjacency-changes all
+ segment-routing mpls
+ passive-interface Loopback0
